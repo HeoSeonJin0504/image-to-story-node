@@ -1,6 +1,6 @@
-# 그림나래(Image-to-Story)
+# 그림나래(Image-to-Story-node)
 
-그림나래(Image-to-Story)는 업로드된 이미지를 분석하여 창의적인 동화를 생성하는 **백엔드 서버(Node.js)**입니다.
+그림나래(Image-to-Story-node)는 업로드된 이미지를 분석하여 창의적인 동화를 생성해주는 서비스의 **백엔드 서버(Node.js)**입니다.
 
 ## 프로젝트 개요
 
