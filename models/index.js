@@ -1,11 +1,9 @@
-// models/index.js
 const sequelize = require('../config/database');
 const User = require('./user');
 const Image = require('./image');
 const ImageInfo = require('./imageInfo');
 const Story = require('./story');
 
-// 모델 간 관계 설정
 User.hasMany(Image, { foreignKey: 'user_id', as: 'images' });
 Image.belongsTo(User, { foreignKey: 'user_id', as: 'owner' });
 
@@ -25,6 +23,7 @@ const initDB = async () => {
     console.log('DB 연결 성공');
   } catch (error) {
     console.error('DB 연결 실패:', error);
+    throw error;
   }
 };
 

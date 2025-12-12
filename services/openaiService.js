@@ -1,10 +1,10 @@
 const { OpenAI } = require("openai");
 const fs = require("fs");
-require("dotenv").config();
+const config = require("../config/env");
 
 // OpenAI 인스턴스 생성
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: config.OPENAI_API_KEY,
 });
 
 // 파일을 Base64 인코딩
@@ -50,7 +50,7 @@ const detectStoryWithChatGPT = async (filePath) => {
     return response.choices[0].message.content.trim();
   } catch (err) {
     console.error("OpenAI 호출 에러:", err);
-    throw err;
+    throw new Error("OpenAI API 호출에 실패했습니다.");
   }
 };
 
