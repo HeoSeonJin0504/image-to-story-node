@@ -44,7 +44,6 @@ const detectStoryWithChatGPT = async (filePath) => {
           ],
         },
       ],
-      // FAST API 코드와 동일하게 max_tokens를 600로 설정합니다.
       max_tokens: 600,
     });
     return response.choices[0].message.content.trim();
