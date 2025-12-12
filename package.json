@@ -1,7 +1,7 @@
 {
     "name": "image-to-story",
     "version": "1.0.0",
-    "description": "FastAPI 코드를 Node.js로",
+    "description": "그림을 업로드하면 동화를 생성하는 프로그램",
     "main": "app.js",
     "scripts": {
         "start": "node app.js",
