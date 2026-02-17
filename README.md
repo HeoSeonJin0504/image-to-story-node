@@ -17,7 +17,7 @@ AI 기반 동화 생성 플랫폼의 백엔드 서버입니다.
 - **Framework**: Express (v4.x)
 - **Database**: MySQL (v8+) + Sequelize ORM
 - **Auth**: JWT (jsonwebtoken + bcrypt)
-- **AI**: OpenAI GPT-4o Vision API
+- **AI**: OpenAI GPT-4o API
 - **File Upload**: Multer (메모리 스토리지)
 
 ## 📁 프로젝트 구조
