@@ -28,6 +28,11 @@ const Story = sequelize.define('Story', {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  created_at: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW,
+  },
 }, {
   tableName: 'stories',
   timestamps: false,

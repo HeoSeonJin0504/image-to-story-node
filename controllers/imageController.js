@@ -37,11 +37,9 @@ exports.uploadImage = async (req, res) => {
       return res.status(400).json({ error: "user_id는 필수입니다." });
     }
 
-    // 메모리에서 Base64 변환
     const base64Image = file.buffer.toString("base64");
     const mimeType = file.mimetype;
 
-    // OpenAI를 사용하여 동화 생성
     const storyStr = await detectStoryWithChatGPT(base64Image, mimeType);
 
     if (!storyStr || typeof storyStr !== "string") {
@@ -58,9 +56,6 @@ exports.uploadImage = async (req, res) => {
     const story_name = titleMatch[1];
     const story_content = contentMatch[1];
 
-    // 프론트에서 저장 시 필요한 데이터와 함께 반환
-    // base64는 저장 확정 시 프론트에서 다시 전송하지 않도록 서버에서 임시 보관하는 대신
-    // 생성된 이야기 데이터만 반환하고 파일은 프론트가 그대로 들고 있도록 함
     res.json({
       story_name,
       story_content,
@@ -87,7 +82,6 @@ exports.saveStory = async (req, res) => {
       return res.status(400).json({ error: "필수 정보가 누락되었습니다." });
     }
 
-    // 파일명 생성 후 디스크에 저장
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const filename = uniqueSuffix + path.extname(file.originalname);
     const filePath = path.join(config.UPLOAD_DIRECTORY, filename);
@@ -106,13 +100,13 @@ exports.saveStory = async (req, res) => {
 
     const image_id = image.image_id;
 
-    // 이야기 DB 저장
-    await Story.create({
+    // 이야기 DB 저장 (created_at은 defaultValue로 자동 입력)
+    const story = await Story.create({
       filename,
       story_name,
       story_content,
       image_id,
-      user_id: parseInt(user_id)
+      user_id: parseInt(user_id),
     });
 
     console.log(`filename: ${filename}\nstory_name: ${story_name}`);
@@ -121,7 +115,8 @@ exports.saveStory = async (req, res) => {
       filename,
       story_name,
       story_content,
-      image_url
+      image_url,
+      created_at: story.created_at,
     });
 
   } catch (error) {
@@ -147,7 +142,7 @@ exports.getStoryList = async (req, res) => {
           attributes: ['image_url'],
         }
       ],
-      attributes: ['story_id', 'story_name'],
+      attributes: ['story_id', 'story_name', 'created_at'],
       order: [['story_id', 'DESC']],
     });
 
@@ -155,6 +150,7 @@ exports.getStoryList = async (req, res) => {
       story_id: story.story_id,
       story_name: story.story_name,
       image_url: story.image?.image_url ?? null,
+      created_at: story.created_at,
     }));
 
     res.json(result);
@@ -182,7 +178,7 @@ exports.getStoryDetail = async (req, res) => {
           attributes: ['image_url'],
         }
       ],
-      attributes: ['story_id', 'story_name', 'story_content'],
+      attributes: ['story_id', 'story_name', 'story_content', 'created_at'],
     });
 
     if (!story) {
@@ -194,6 +190,7 @@ exports.getStoryDetail = async (req, res) => {
       story_name: story.story_name,
       story_content: story.story_content,
       image_url: story.image?.image_url ?? null,
+      created_at: story.created_at,
     });
 
   } catch (error) {

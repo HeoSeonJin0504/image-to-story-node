@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const imageController = require("../controllers/imageController");
-const authMiddleware = require("../middlewares/authMiddleware");
+const authMiddleware = require("../middlewares/authmiddleware");
 
 // 인증이 필요한 라우트에 authMiddleware 적용
 router.post("/image-upload", authMiddleware, imageController.uploadMiddleware, imageController.uploadImage);
