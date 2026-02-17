@@ -5,7 +5,7 @@ const { Image, Story } = require("../models");
 const { detectStoryWithChatGPT } = require("../services/openaiService");
 const config = require("../config/env");
 
-// memoryStorage (메모리에서 처리) 
+// memoryStorage - 디스크에 저장하지 않고 메모리에서 처리
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
@@ -23,7 +23,7 @@ const upload = multer({
 
 exports.uploadMiddleware = upload.single("file");
 
-// 이미지 업로드 + 이야기 생성
+// 이미지 업로드 + 이야기 생성만 처리 (DB 저장 없음)
 exports.uploadImage = async (req, res) => {
   try {
     const file = req.file;
@@ -73,7 +73,7 @@ exports.uploadImage = async (req, res) => {
   }
 };
 
-// 사용자가 확인 후 저장
+// 사용자가 확인 후 저장 확정 시 처리
 exports.saveStory = async (req, res) => {
   try {
     const file = req.file;
@@ -126,6 +126,78 @@ exports.saveStory = async (req, res) => {
 
   } catch (error) {
     console.error("이야기 저장 에러:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// 이야기 목록 조회 (user_id 기준)
+exports.getStoryList = async (req, res) => {
+  try {
+    const { user_id } = req.params;
+
+    if (!user_id) {
+      return res.status(400).json({ error: "user_id는 필수입니다." });
+    }
+
+    const stories = await Story.findAll({
+      where: { user_id: parseInt(user_id) },
+      include: [
+        {
+          association: 'image',
+          attributes: ['image_url'],
+        }
+      ],
+      attributes: ['story_id', 'story_name'],
+      order: [['story_id', 'DESC']],
+    });
+
+    const result = stories.map(story => ({
+      story_id: story.story_id,
+      story_name: story.story_name,
+      image_url: story.image?.image_url ?? null,
+    }));
+
+    res.json(result);
+
+  } catch (error) {
+    console.error("이야기 목록 조회 에러:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// 이야기 상세 조회 (story_id 기준)
+exports.getStoryDetail = async (req, res) => {
+  try {
+    const { story_id } = req.params;
+
+    if (!story_id) {
+      return res.status(400).json({ error: "story_id는 필수입니다." });
+    }
+
+    const story = await Story.findOne({
+      where: { story_id: parseInt(story_id) },
+      include: [
+        {
+          association: 'image',
+          attributes: ['image_url'],
+        }
+      ],
+      attributes: ['story_id', 'story_name', 'story_content'],
+    });
+
+    if (!story) {
+      return res.status(404).json({ error: "이야기를 찾을 수 없습니다." });
+    }
+
+    res.json({
+      story_id: story.story_id,
+      story_name: story.story_name,
+      story_content: story.story_content,
+      image_url: story.image?.image_url ?? null,
+    });
+
+  } catch (error) {
+    console.error("이야기 상세 조회 에러:", error);
     res.status(500).json({ error: error.message });
   }
 };
