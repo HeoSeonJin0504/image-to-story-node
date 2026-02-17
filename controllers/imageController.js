@@ -198,3 +198,48 @@ exports.getStoryDetail = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// 이야기 + 이미지 삭제
+exports.deleteStory = async (req, res) => {
+  try {
+    const { story_id } = req.params;
+    const user_id = req.user.user_id;
+
+    if (!story_id) {
+      return res.status(400).json({ error: "story_id는 필수입니다." });
+    }
+
+    // 본인 소유 확인
+    const story = await Story.findOne({
+      where: { story_id: parseInt(story_id), user_id },
+      include: [{ association: 'image' }],
+    });
+
+    if (!story) {
+      return res.status(404).json({ error: "이야기를 찾을 수 없습니다." });
+    }
+
+    const filename = story.filename;
+    const image_id = story.image_id;
+
+    // 1. Story DB 삭제
+    await story.destroy();
+
+    // 2. Image DB 삭제
+    await Image.destroy({ where: { image_id } });
+
+    // 3. 디스크 파일 삭제
+    const filePath = path.join(config.UPLOAD_DIRECTORY, filename);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    console.log(`삭제 완료 - story_id: ${story_id}, filename: ${filename}`);
+
+    res.json({ message: "이야기가 삭제되었습니다." });
+
+  } catch (error) {
+    console.error("이야기 삭제 에러:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
