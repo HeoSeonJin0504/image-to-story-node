@@ -1,5 +1,4 @@
 const { OpenAI } = require("openai");
-const fs = require("fs");
 const config = require("../config/env");
 
 // OpenAI 인스턴스 생성
@@ -7,14 +6,7 @@ const openai = new OpenAI({
   apiKey: config.OPENAI_API_KEY,
 });
 
-// 파일을 Base64 인코딩
-const encodeImage = (filePath) => {
-  const imageFile = fs.readFileSync(filePath);
-  return Buffer.from(imageFile).toString("base64");
-};
-
-const detectStoryWithChatGPT = async (filePath) => {
-  const base64Image = encodeImage(filePath);
+const detectStoryWithChatGPT = async (base64Image, mimeType = "image/jpeg") => {
   const prompt = (
     "다음은 업로드된 이미지 파일에 대한 분석 작업입니다. 다음 단계에 따라 작업을 수행하세요:" +
     "1. 이미지의 내용을 간결하고 명확하게 묘사하세요." +
@@ -29,7 +21,6 @@ const detectStoryWithChatGPT = async (filePath) => {
       messages: [
         {
           role: "user",
-          // FAST API에서는 content 항목에 배열 형태로 전달하므로 동일하게 구성합니다.
           content: [
             {
               type: "text",
@@ -38,7 +29,7 @@ const detectStoryWithChatGPT = async (filePath) => {
             {
               type: "image_url",
               image_url: {
-                url: `data:image/jpeg;base64,${base64Image}`,
+                url: `data:${mimeType};base64,${base64Image}`,
               },
             },
           ],
