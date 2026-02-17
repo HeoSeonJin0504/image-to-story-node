@@ -1,14 +1,10 @@
 const sequelize = require('../config/database');
 const User = require('./user');
 const Image = require('./image');
-const ImageInfo = require('./imageInfo');
 const Story = require('./story');
 
 User.hasMany(Image, { foreignKey: 'user_id', as: 'images' });
 Image.belongsTo(User, { foreignKey: 'user_id', as: 'owner' });
-
-Image.hasOne(ImageInfo, { foreignKey: 'image_id', as: 'image_info' });
-ImageInfo.belongsTo(Image, { foreignKey: 'image_id', as: 'image' });
 
 User.hasMany(Story, { foreignKey: 'user_id', as: 'stories' });
 Story.belongsTo(User, { foreignKey: 'user_id', as: 'owner' });
@@ -27,4 +23,4 @@ const initDB = async () => {
   }
 };
 
-module.exports = { sequelize, User, Image, ImageInfo, Story, initDB };
+module.exports = { sequelize, User, Image, Story, initDB };

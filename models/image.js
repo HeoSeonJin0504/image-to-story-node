@@ -15,6 +15,12 @@ const Image = sequelize.define('Image', {
     type: DataTypes.STRING(255),
     allowNull: false,
   },
+  image_url: {
+    type: DataTypes.STRING(255),
+  },
+  image_description: {
+    type: DataTypes.TEXT,
+  },
 }, {
   tableName: 'images',
   timestamps: false,

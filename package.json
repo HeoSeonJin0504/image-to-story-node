@@ -8,10 +8,10 @@
         "dev": "nodemon app.js"
     },
     "dependencies": {
-        "bcrypt": "^5.1.1",
+        "bcrypt": "^6.0.0",
         "cors": "^2.8.5",
         "dotenv": "^16.4.7",
-        "express": "^4.21.2",
+        "express": "^4.22.1",
         "multer": "^1.4.5-lts.1",
         "mysql2": "^3.11.5",
         "openai": "^4.85.0",
@@ -19,5 +19,11 @@
     },
     "devDependencies": {
         "nodemon": "^3.1.9"
+    },
+    "overrides": {
+        "lodash": "^4.17.21",
+        "tar": "^7.5.6",
+        "qs": "^6.15.0",
+        "body-parser": "^1.20.4"
     }
 }

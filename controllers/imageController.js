@@ -1,7 +1,7 @@
 const path = require("path");
 const fs = require("fs");
 const multer = require("multer");
-const { Image, ImageInfo, Story } = require("../models");
+const { Image, Story } = require("../models");
 const { detectStoryWithChatGPT } = require("../services/openaiService");
 const config = require("../config/env");
 
@@ -15,6 +15,7 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + path.extname(file.originalname));
   }
 });
+
 const upload = multer({ 
   storage,
   limits: { fileSize: 10 * 1024 * 1024 },
@@ -47,22 +48,17 @@ exports.uploadImage = async (req, res) => {
 
     // 파일 저장 경로 설정
     const fileLocation = path.join(config.UPLOAD_DIRECTORY, file.filename);
-
-    // DB에 이미지 저장
-    const image = await Image.create({
-      user_id: parseInt(user_id),
-      original_filename: file.filename
-    });
-    
-    const image_id = image.image_id;
     const image_url = `http://localhost:${config.PORT}/${config.UPLOAD_DIRECTORY}/${file.filename}`;
 
-    // 이미지 정보 저장
-    await ImageInfo.create({
-      image_id,
+    // DB에 이미지 저장 (image_url, image_description 통합)
+    const image = await Image.create({
+      user_id: parseInt(user_id),
+      original_filename: file.filename,
       image_url,
       image_description: ""
     });
+    
+    const image_id = image.image_id;
 
     // OpenAI를 사용하여 동화 생성
     const storyStr = await detectStoryWithChatGPT(fileLocation);
