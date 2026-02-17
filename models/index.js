@@ -1,7 +1,9 @@
+// models/index.js
 const sequelize = require('../config/database');
 const User = require('./user');
 const Image = require('./image');
 const Story = require('./story');
+const RefreshToken = require('./refreshToken');
 
 User.hasMany(Image, { foreignKey: 'user_id', as: 'images' });
 Image.belongsTo(User, { foreignKey: 'user_id', as: 'owner' });
@@ -11,6 +13,9 @@ Story.belongsTo(User, { foreignKey: 'user_id', as: 'owner' });
 
 Image.hasOne(Story, { foreignKey: 'image_id', as: 'story' });
 Story.belongsTo(Image, { foreignKey: 'image_id', as: 'image' });
+
+User.hasMany(RefreshToken, { foreignKey: 'user_id', as: 'refreshTokens' });
+RefreshToken.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
 const initDB = async () => {
   try {
@@ -23,4 +28,4 @@ const initDB = async () => {
   }
 };
 
-module.exports = { sequelize, User, Image, Story, initDB };
+module.exports = { sequelize, User, Image, Story, RefreshToken, initDB };
