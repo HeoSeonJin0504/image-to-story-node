@@ -3,7 +3,7 @@ const fs = require("fs");
 const multer = require("multer");
 const { Image, Story } = require("../models");
 const { detectStoryWithChatGPT } = require("../services/openaiService");
-const { synthesizeSpeech, deleteAudioFile } = require("../services/ttsService");
+const { synthesizeSpeech, deleteAudioFile, synthesizeSpeechPreview } = require("../services/ttsService");
 const config = require("../config/env");
 
 // memoryStorage - 디스크에 저장하지 않고 메모리에서 처리
@@ -214,6 +214,34 @@ exports.getStoryDetail = async (req, res) => {
   } catch (error) {
     console.error("이야기 상세 조회 에러:", error);
     res.status(500).json({ error: error.message });
+  }
+};
+
+// TTS 미리듣기 (저장 없이 스트리밍)
+exports.ttsPreview = async (req, res) => {
+  try {
+    const { story_content, voice_gender = 'FEMALE' } = req.body;
+
+    if (!story_content) {
+      return res.status(400).json({ error: "story_content는 필수입니다." });
+    }
+
+    // 미리듣기는 앞부분 150자만 변환 (API 비용 절감)
+    const previewText = story_content.slice(0, 150);
+
+    const audioBuffer = await synthesizeSpeechPreview(previewText, voice_gender);
+
+    res.set({
+      'Content-Type': 'audio/mpeg',
+      'Content-Length': audioBuffer.length,
+      'Cache-Control': 'no-store',
+    });
+
+    res.send(audioBuffer);
+
+  } catch (error) {
+    console.error("TTS 미리듣기 에러:", error);
+    res.status(500).json({ error: "TTS 미리듣기에 실패했습니다." });
   }
 };
 

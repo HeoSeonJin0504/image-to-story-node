@@ -9,6 +9,7 @@ router.post("/image-upload", authMiddleware, imageController.uploadMiddleware, i
 router.post("/story-save", authMiddleware, imageController.uploadMiddleware, imageController.saveStory);
 router.get("/stories/:user_id", authMiddleware, imageController.getStoryList);
 router.get("/story/:story_id", authMiddleware, imageController.getStoryDetail);
+router.post("/tts-preview", authMiddleware, imageController.ttsPreview);
 router.delete("/story/:story_id", authMiddleware, imageController.deleteStory);
 
 module.exports = router;

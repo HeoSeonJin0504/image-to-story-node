@@ -54,6 +54,33 @@ const synthesizeSpeech = async (text, filename, gender = 'FEMALE') => {
 };
 
 /**
+ * 미리듣기용 TTS — 디스크 저장 없이 Buffer 반환
+ * @param {string} text - 변환할 텍스트
+ * @param {string} gender - 목소리 선택 ('MALE' | 'FEMALE'), 기본값 FEMALE
+ * @returns {Promise<Buffer>} - mp3 오디오 버퍼
+ */
+const synthesizeSpeechPreview = async (text, gender = 'FEMALE') => {
+  const voice = VOICE_MAP[gender] ?? VOICE_MAP['FEMALE'];
+
+  const request = {
+    input: { text },
+    voice: {
+      languageCode: 'ko-KR',
+      name: voice.name,
+      ssmlGender: voice.ssmlGender,
+    },
+    audioConfig: {
+      audioEncoding: 'MP3',
+      speakingRate: 0.9,
+      pitch: 0,
+    },
+  };
+
+  const [response] = await client.synthesizeSpeech(request);
+  return response.audioContent; // Buffer
+};
+
+/**
  * 음성 파일 삭제
  * @param {string} filename - 이미지와 동일한 기본 파일명 (확장자 제외)
  */
@@ -67,4 +94,4 @@ const deleteAudioFile = (filename) => {
   }
 };
 
-module.exports = { synthesizeSpeech, deleteAudioFile };
+module.exports = { synthesizeSpeech, deleteAudioFile, synthesizeSpeechPreview };
