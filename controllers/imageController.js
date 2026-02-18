@@ -3,6 +3,7 @@ const fs = require("fs");
 const multer = require("multer");
 const { Image, Story } = require("../models");
 const { detectStoryWithChatGPT } = require("../services/openaiService");
+const { synthesizeSpeech, deleteAudioFile } = require("../services/ttsService");
 const config = require("../config/env");
 
 // memoryStorage - 디스크에 저장하지 않고 메모리에서 처리
@@ -70,6 +71,8 @@ exports.uploadImage = async (req, res) => {
 
 // 사용자가 확인 후 저장 확정 시 처리
 exports.saveStory = async (req, res) => {
+  let filename = null;
+
   try {
     const file = req.file;
     const { user_id, story_name, story_content } = req.body;
@@ -82,15 +85,16 @@ exports.saveStory = async (req, res) => {
       return res.status(400).json({ error: "필수 정보가 누락되었습니다." });
     }
 
+    // 1. 이미지 파일 저장
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const filename = uniqueSuffix + path.extname(file.originalname);
+    filename = uniqueSuffix + path.extname(file.originalname);
     const filePath = path.join(config.UPLOAD_DIRECTORY, filename);
 
     fs.writeFileSync(filePath, file.buffer);
 
     const image_url = `http://localhost:${config.PORT}/${config.UPLOAD_DIRECTORY}/${filename}`;
 
-    // 이미지 DB 저장
+    // 2. 이미지 DB 저장
     const image = await Image.create({
       user_id: parseInt(user_id),
       original_filename: filename,
@@ -100,13 +104,24 @@ exports.saveStory = async (req, res) => {
 
     const image_id = image.image_id;
 
-    // 이야기 DB 저장 (created_at은 defaultValue로 자동 입력)
+    // 3. TTS 음성 생성 및 저장
+    //    실패해도 동화 저장은 계속 진행 (audio_url은 null로 저장)
+    let audio_url = null;
+    try {
+      audio_url = await synthesizeSpeech(story_content, filename);
+      console.log(`TTS 생성 완료: ${audio_url}`);
+    } catch (ttsError) {
+      console.error("TTS 생성 실패 (동화 저장은 계속 진행):", ttsError.message);
+    }
+
+    // 4. 이야기 DB 저장
     const story = await Story.create({
       filename,
       story_name,
       story_content,
       image_id,
       user_id: parseInt(user_id),
+      audio_url,
     });
 
     console.log(`filename: ${filename}\nstory_name: ${story_name}`);
@@ -116,6 +131,7 @@ exports.saveStory = async (req, res) => {
       story_name,
       story_content,
       image_url,
+      audio_url,
       created_at: story.created_at,
     });
 
@@ -161,7 +177,7 @@ exports.getStoryList = async (req, res) => {
   }
 };
 
-// 이야기 상세 조회 (story_id 기준)
+// 이야기 상세 조회 (story_id 기준) - audio_url 포함
 exports.getStoryDetail = async (req, res) => {
   try {
     const { story_id } = req.params;
@@ -178,7 +194,7 @@ exports.getStoryDetail = async (req, res) => {
           attributes: ['image_url'],
         }
       ],
-      attributes: ['story_id', 'story_name', 'story_content', 'created_at'],
+      attributes: ['story_id', 'story_name', 'story_content', 'audio_url', 'created_at'],
     });
 
     if (!story) {
@@ -190,6 +206,7 @@ exports.getStoryDetail = async (req, res) => {
       story_name: story.story_name,
       story_content: story.story_content,
       image_url: story.image?.image_url ?? null,
+      audio_url: story.audio_url ?? null,  // TTS 실패 시 null
       created_at: story.created_at,
     });
 
@@ -199,7 +216,7 @@ exports.getStoryDetail = async (req, res) => {
   }
 };
 
-// 이야기 + 이미지 삭제
+// 이야기 + 이미지 + 음성 삭제
 exports.deleteStory = async (req, res) => {
   try {
     const { story_id } = req.params;
@@ -228,11 +245,14 @@ exports.deleteStory = async (req, res) => {
     // 2. Image DB 삭제
     await Image.destroy({ where: { image_id } });
 
-    // 3. 디스크 파일 삭제
-    const filePath = path.join(config.UPLOAD_DIRECTORY, filename);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    // 3. 이미지 파일 삭제
+    const imagePath = path.join(config.UPLOAD_DIRECTORY, filename);
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath);
     }
+
+    // 4. TTS 음성 파일 삭제 (이미지와 동일한 기본 파일명으로 .mp3)
+    deleteAudioFile(filename);
 
     console.log(`삭제 완료 - story_id: ${story_id}, filename: ${filename}`);
 

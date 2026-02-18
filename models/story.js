@@ -28,6 +28,11 @@ const Story = sequelize.define('Story', {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  // TTS로 생성된 음성 파일 URL
+  audio_url: {
+    type: DataTypes.STRING(255),
+    allowNull: true,  // TTS 실패해도 동화 저장은 성공하도록 nullable
+  },
   created_at: {
     type: DataTypes.DATE,
     allowNull: false,

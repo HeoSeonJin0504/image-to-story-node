@@ -19,6 +19,7 @@ module.exports = {
   DATABASE_URL: process.env.DATABASE_URL,
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   UPLOAD_DIRECTORY: process.env.UPLOAD_DIRECTORY,
+  AUDIO_DIRECTORY: process.env.AUDIO_DIRECTORY || 'audios',
   CORS_ORIGINS: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(",") : [],
   JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET,
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
