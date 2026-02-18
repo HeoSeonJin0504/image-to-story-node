@@ -6,19 +6,29 @@ const config = require('../config/env');
 
 const client = new textToSpeech.TextToSpeechClient();
 
+// 지원하는 목소리 목록
+// ko-KR Neural2 실제 성별: A(여성), B(여성), C(남성)
+const VOICE_MAP = {
+  FEMALE: { name: 'ko-KR-Neural2-A', ssmlGender: 'FEMALE' },
+  MALE:   { name: 'ko-KR-Neural2-C', ssmlGender: 'MALE' },
+};
+
 /**
  * 동화 텍스트를 mp3로 변환 후 디스크에 저장
  * @param {string} text - 변환할 텍스트 (동화 내용)
  * @param {string} filename - 저장할 파일명 (확장자 제외, 이미지와 동일한 이름 사용)
+ * @param {string} gender - 목소리 선택 ('MALE' | 'FEMALE'), 기본값 FEMALE
  * @returns {Promise<string>} - 저장된 audio_url
  */
-const synthesizeSpeech = async (text, filename) => {
+const synthesizeSpeech = async (text, filename, gender = 'FEMALE') => {
+  const voice = VOICE_MAP[gender] ?? VOICE_MAP['FEMALE']; // 잘못된 값이면 FEMALE로 폴백
+
   const request = {
     input: { text },
     voice: {
       languageCode: 'ko-KR',
-      name: 'ko-KR-Neural2-A',  // 한국어 Neural2 여성 음성
-      ssmlGender: 'FEMALE',
+      name: voice.name,
+      ssmlGender: voice.ssmlGender,
     },
     audioConfig: {
       audioEncoding: 'MP3',

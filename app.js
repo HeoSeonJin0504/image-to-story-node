@@ -18,6 +18,7 @@ app.use(cors({
 }));
 
 app.use(`/${config.UPLOAD_DIRECTORY}`, express.static(path.join(__dirname, config.UPLOAD_DIRECTORY)));
+app.use('/audios', express.static('audios'));
 
 app.use("/", routes);
 

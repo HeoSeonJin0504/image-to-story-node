@@ -75,7 +75,8 @@ exports.saveStory = async (req, res) => {
 
   try {
     const file = req.file;
-    const { user_id, story_name, story_content } = req.body;
+    const { user_id, story_name, story_content, voice_gender = 'FEMALE' } = req.body;
+    // voice_gender: 'MALE' | 'FEMALE' (미전송 시 기본값 FEMALE)
 
     if (!file) {
       return res.status(400).json({ error: "파일 업로드 실패" });
@@ -108,7 +109,7 @@ exports.saveStory = async (req, res) => {
     //    실패해도 동화 저장은 계속 진행 (audio_url은 null로 저장)
     let audio_url = null;
     try {
-      audio_url = await synthesizeSpeech(story_content, filename);
+      audio_url = await synthesizeSpeech(story_content, filename, voice_gender);
       console.log(`TTS 생성 완료: ${audio_url}`);
     } catch (ttsError) {
       console.error("TTS 생성 실패 (동화 저장은 계속 진행):", ttsError.message);
