@@ -91,6 +91,14 @@ exports.saveStory = async (req, res) => {
     filename = uniqueSuffix + path.extname(file.originalname);
     const filePath = path.join(config.UPLOAD_DIRECTORY, filename);
 
+    // 폴더 없으면 자동 생성 (Railway 재배포 시 폴더가 사라지므로)
+    if (!fs.existsSync(config.UPLOAD_DIRECTORY)) {
+      fs.mkdirSync(config.UPLOAD_DIRECTORY, { recursive: true });
+    }
+    if (!fs.existsSync(config.AUDIO_DIRECTORY)) {
+      fs.mkdirSync(config.AUDIO_DIRECTORY, { recursive: true });
+    }
+
     fs.writeFileSync(filePath, file.buffer);
 
     const image_url = `${config.BASE_URL}/${config.UPLOAD_DIRECTORY}/${filename}`;
