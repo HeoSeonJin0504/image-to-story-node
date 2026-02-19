@@ -31,7 +31,7 @@ app.use(cors({
   origin: isProduction
     ? (origin, callback) => {
         // 서버 간 요청(origin 없음)은 허용하지 않음
-        if (!origin) return callback(new Error('origin이 없는 요청은 허용되지 않습니다.'));
+        if (!origin) return callback(null, true);
         if (config.CORS_ORIGINS.includes(origin)) {
           return callback(null, true);
         }
