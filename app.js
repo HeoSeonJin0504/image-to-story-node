@@ -6,6 +6,14 @@ const config = require("./config/env");
 const { initDB } = require("./models");
 const routes = require("./routes");
 
+// 배포용
+if (process.env.GOOGLE_CREDENTIALS_BASE64) {
+  const fs = require('fs');
+  const creds = Buffer.from(process.env.GOOGLE_CREDENTIALS_BASE64, 'base64').toString('utf8');
+  fs.writeFileSync('./google-credentials.json', creds);
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = './google-credentials.json';
+}
+
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
 app.use(express.json());
