@@ -93,7 +93,7 @@ exports.saveStory = async (req, res) => {
 
     fs.writeFileSync(filePath, file.buffer);
 
-    const image_url = `http://localhost:${config.PORT}/${config.UPLOAD_DIRECTORY}/${filename}`;
+    const image_url = `${config.BASE_URL}/${config.UPLOAD_DIRECTORY}/${filename}`;
 
     // 2. 이미지 DB 저장
     const image = await Image.create({

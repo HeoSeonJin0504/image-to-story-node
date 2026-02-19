@@ -10,6 +10,30 @@ const userAndIpKey = (req) => {
   return req.user?.user_id ? `${req.user.user_id}:${ip}` : ip;
 };
 
+// 전역 IP 제한: 인증 여부와 무관하게 IP당 상한선
+
+// 동화 생성 전역 제한: IP 기준 1시간 5회 (user+IP 제한의 상한선)
+const globalStoryLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  keyGenerator: (req) => ipKeyGenerator(req),
+  handler: rateLimitHandler,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// TTS 전역 제한: IP 기준 1시간 5회
+const globalTtsLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  keyGenerator: (req) => ipKeyGenerator(req),
+  handler: rateLimitHandler,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// 유저+IP 조합 제한 (계정 다중 생성 방어)
+
 // 동화 생성 제한: user+IP 기준 1시간 3회
 const storyGenerateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -65,6 +89,8 @@ const signupLimiter = rateLimit({
 });
 
 module.exports = {
+  globalStoryLimiter,
+  globalTtsLimiter,
   storyGenerateLimiter,
   ttsPreviewLimiter,
   storySaveLimiter,

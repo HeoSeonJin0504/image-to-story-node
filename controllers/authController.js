@@ -9,13 +9,14 @@ const {
 } = require("../services/tokenService");
 
 const SALT_ROUNDS = 10;
+const isProduction = process.env.NODE_ENV === 'production';
 
-// Refresh Token 쿠키 설정 공통 옵션
+// Refresh Token 쿠키 설정 공통 옵션 - 배포 환경 개발환경 구분
 const REFRESH_COOKIE_OPTIONS = {
-  httpOnly: true,   // JS 접근 불가 (XSS 방어)
-  secure: process.env.NODE_ENV === 'production', // HTTPS 환경에서만 전송
-  sameSite: 'strict',
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7일 (ms)
+  httpOnly: true,                      // JS 접근 불가 (XSS 방어)
+  secure: isProduction,                // 프로덕션에서만 HTTPS 강제
+  sameSite: isProduction ? 'none' : 'lax', // 크로스 도메인 배포 대응
+  maxAge: 7 * 24 * 60 * 60 * 1000,    // 7일 (ms)
   path: '/',
 };
 

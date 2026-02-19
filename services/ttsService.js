@@ -49,7 +49,7 @@ const synthesizeSpeech = async (text, filename, gender = 'FEMALE') => {
 
   fs.writeFileSync(filePath, response.audioContent, 'binary');
 
-  const audio_url = `http://localhost:${config.PORT}/${config.AUDIO_DIRECTORY}/${audioFilename}`;
+  const audio_url = `${config.BASE_URL}/${config.AUDIO_DIRECTORY}/${audioFilename}`;
   return audio_url;
 };
 

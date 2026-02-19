@@ -6,6 +6,7 @@ const requiredEnvVars = [
   'UPLOAD_DIRECTORY',
   'JWT_ACCESS_SECRET',
   'JWT_REFRESH_SECRET',
+  'BASE_URL',
 ];
 
 requiredEnvVars.forEach(varName => {
@@ -16,6 +17,7 @@ requiredEnvVars.forEach(varName => {
 
 module.exports = {
   PORT: process.env.PORT || 3000,
+  BASE_URL: process.env.BASE_URL,
   DATABASE_URL: process.env.DATABASE_URL,
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   UPLOAD_DIRECTORY: process.env.UPLOAD_DIRECTORY,
