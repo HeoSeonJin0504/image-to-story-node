@@ -1,4 +1,3 @@
-// middlewares/authMiddleware.js
 const { verifyAccessToken } = require('../services/tokenService');
 
 const authMiddleware = (req, res, next) => {
