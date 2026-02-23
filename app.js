@@ -1,8 +1,6 @@
-// 반드시 가장 첫 줄
 require('dotenv').config();
 
 // Google 자격증명 복원
-// Railway에는 google-credentials.json 파일이 없으므로 GOOGLE_CREDENTIALS_BASE64 환경변수로 복원
 if (process.env.GOOGLE_CREDENTIALS_BASE64) {
   const fs = require('fs');
   const creds = Buffer.from(process.env.GOOGLE_CREDENTIALS_BASE64, 'base64').toString('utf8');
@@ -20,6 +18,12 @@ const routes = require("./routes");
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
+
+// X-Powered-By 헤더 제거 (서버 정보 노출 방지)
+app.disable('x-powered-by');
+
+// Render 리버스 프록시 신뢰 설정 (rate limit IP 정확도 향상)
+app.set('trust proxy', 1);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -45,6 +49,11 @@ app.use(cors({
 
 app.use(`/${config.UPLOAD_DIRECTORY}`, express.static(path.join(__dirname, config.UPLOAD_DIRECTORY)));
 app.use('/audios', express.static('audios'));
+
+// 헬스체크 엔드포인트 (슬립 방지용)
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 app.use("/", routes);
 
