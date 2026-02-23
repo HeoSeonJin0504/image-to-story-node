@@ -29,7 +29,7 @@ const upload = multer({
 export const uploadMiddleware = upload.single('file');
 
 // 이미지 업로드 + 이야기 생성만 처리 (DB 저장 없음)
-export const uploadImage = async (req, res) => {
+export const uploadImage = async (req, res, next) => {
   try {
     const file = req.file;
     const { user_id } = req.body;
@@ -59,13 +59,13 @@ export const uploadImage = async (req, res) => {
       original_filename: file.originalname,
     });
   } catch (error) {
-    console.error('이미지 업로드 에러:', error);
-    res.status(500).json({ error: error.message });
+    // 변경: 직접 응답 → next(error)로 에러 핸들러에 위임
+    next(error);
   }
 };
 
 // 사용자가 확인 후 저장 확정 시 처리
-export const saveStory = async (req, res) => {
+export const saveStory = async (req, res, next) => {
   let filename = null;
 
   try {
@@ -77,7 +77,7 @@ export const saveStory = async (req, res) => {
       return res.status(400).json({ error: '필수 정보가 누락되었습니다.' });
     }
 
-    // 1. 이미지 파일 저장
+     // 1. 이미지 파일 저장
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     filename = uniqueSuffix + path.extname(file.originalname);
     const filePath = path.join(config.UPLOAD_DIRECTORY, filename);
@@ -93,7 +93,7 @@ export const saveStory = async (req, res) => {
 
     const image_url = `${config.BASE_URL}/${config.UPLOAD_DIRECTORY}/${filename}`;
 
-    // 2. 이미지 DB 저장
+     // 2. 이미지 DB 저장
     const image = await Image.create({
       user_id: parseInt(user_id),
       original_filename: filename,
@@ -108,6 +108,7 @@ export const saveStory = async (req, res) => {
       audio_url = await synthesizeSpeech(story_content, filename, voice_gender);
       console.log(`TTS 생성 완료: ${audio_url}`);
     } catch (ttsError) {
+      // TTS 실패는 치명적 에러가 아니므로 next()로 넘기지 않고 로그만 남김
       console.error('TTS 생성 실패 (동화 저장은 계속 진행):', ttsError.message);
     }
 
@@ -130,13 +131,20 @@ export const saveStory = async (req, res) => {
       created_at: story.created_at,
     });
   } catch (error) {
-    console.error('이야기 저장 에러:', error);
-    res.status(500).json({ error: error.message });
+    // 저장 도중 에러 발생 시 이미 저장된 이미지 파일 롤백
+    if (filename) {
+      const filePath = path.join(config.UPLOAD_DIRECTORY, filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        console.log(`롤백: 이미지 파일 삭제 완료 (${filename})`);
+      }
+    }
+    next(error);
   }
 };
 
 // 이야기 목록 조회 (user_id 기준)
-export const getStoryList = async (req, res) => {
+export const getStoryList = async (req, res, next) => {
   try {
     const { user_id } = req.params;
     if (!user_id) return res.status(400).json({ error: 'user_id는 필수입니다.' });
@@ -157,13 +165,12 @@ export const getStoryList = async (req, res) => {
 
     res.json(result);
   } catch (error) {
-    console.error('이야기 목록 조회 에러:', error);
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };
 
 // 이야기 상세 조회 (story_id 기준) - audio_url 포함
-export const getStoryDetail = async (req, res) => {
+export const getStoryDetail = async (req, res, next) => {
   try {
     const { story_id } = req.params;
     if (!story_id) return res.status(400).json({ error: 'story_id는 필수입니다.' });
@@ -185,13 +192,12 @@ export const getStoryDetail = async (req, res) => {
       created_at: story.created_at,
     });
   } catch (error) {
-    console.error('이야기 상세 조회 에러:', error);
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };
 
 // TTS 미리듣기 (저장 없이 스트리밍)
-export const ttsPreview = async (req, res) => {
+export const ttsPreview = async (req, res, next) => {
   try {
     const { story_content, voice_gender = 'FEMALE' } = req.body;
     if (!story_content) return res.status(400).json({ error: 'story_content는 필수입니다.' });
@@ -207,13 +213,12 @@ export const ttsPreview = async (req, res) => {
 
     res.send(audioBuffer);
   } catch (error) {
-    console.error('TTS 미리듣기 에러:', error);
-    res.status(500).json({ error: 'TTS 미리듣기에 실패했습니다.' });
+    next(error);
   }
 };
 
 // 이야기 + 이미지 + 음성 삭제
-export const deleteStory = async (req, res) => {
+export const deleteStory = async (req, res, next) => {
   try {
     const { story_id } = req.params;
     const user_id = req.user.user_id;
@@ -231,7 +236,7 @@ export const deleteStory = async (req, res) => {
     const filename = story.filename;
     const image_id = story.image_id;
 
-    // 1. Story DB 삭제
+     // 1. Story DB 삭제
     await story.destroy();
 
     // 2. Image DB 삭제
@@ -249,7 +254,6 @@ export const deleteStory = async (req, res) => {
     console.log(`삭제 완료 - story_id: ${story_id}, filename: ${filename}`);
     res.json({ message: '이야기가 삭제되었습니다.' });
   } catch (error) {
-    console.error('이야기 삭제 에러:', error);
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };

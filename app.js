@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import errorHandler from './middlewares/errorHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -67,6 +68,8 @@ app.use('/', routes);
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the Server!' });
 });
+
+app.use(errorHandler);
 
 initDB().then(() => {
   app.listen(config.PORT, () => {
