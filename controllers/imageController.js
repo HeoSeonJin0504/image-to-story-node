@@ -1,10 +1,15 @@
-const path = require("path");
-const fs = require("fs");
-const multer = require("multer");
-const { Image, Story } = require("../models");
-const { detectStoryWithChatGPT } = require("../services/openaiService");
-const { synthesizeSpeech, deleteAudioFile, synthesizeSpeechPreview } = require("../services/ttsService");
-const config = require("../config/env");
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import multer from 'multer';
+import { Image, Story } from '../models/index.js';
+import { detectStoryWithChatGPT } from '../services/openaiService.js';
+import { synthesizeSpeech, deleteAudioFile, synthesizeSpeechPreview } from '../services/ttsService.js';
+import config from '../config/env.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // memoryStorage - 디스크에 저장하지 않고 메모리에서 처리
 const upload = multer({
@@ -14,76 +19,62 @@ const upload = multer({
     const allowedTypes = /jpeg|jpg|png|gif/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
-
     if (mimetype && extname) {
       return cb(null, true);
     }
-    cb(new Error("이미지 파일만 업로드 가능합니다."));
+    cb(new Error('이미지 파일만 업로드 가능합니다.'));
   }
 });
 
-exports.uploadMiddleware = upload.single("file");
+export const uploadMiddleware = upload.single('file');
 
 // 이미지 업로드 + 이야기 생성만 처리 (DB 저장 없음)
-exports.uploadImage = async (req, res) => {
+export const uploadImage = async (req, res) => {
   try {
     const file = req.file;
     const { user_id } = req.body;
 
-    if (!file) {
-      return res.status(400).json({ error: "파일 업로드 실패" });
-    }
+    if (!file) return res.status(400).json({ error: '파일 업로드 실패' });
+    if (!user_id) return res.status(400).json({ error: 'user_id는 필수입니다.' });
 
-    if (!user_id) {
-      return res.status(400).json({ error: "user_id는 필수입니다." });
-    }
-
-    const base64Image = file.buffer.toString("base64");
+    const base64Image = file.buffer.toString('base64');
     const mimeType = file.mimetype;
 
     const storyStr = await detectStoryWithChatGPT(base64Image, mimeType);
 
-    if (!storyStr || typeof storyStr !== "string") {
-      return res.status(500).json({ error: "동화 생성에 실패했습니다." });
+    if (!storyStr || typeof storyStr !== 'string') {
+      return res.status(500).json({ error: '동화 생성에 실패했습니다.' });
     }
 
     const titleMatch = storyStr.match(/동화 제목:\s*'([^']+)'/);
     const contentMatch = storyStr.match(/동화 내용:\s*'([\s\S]+)'/);
 
     if (!titleMatch || !contentMatch) {
-      return res.status(500).json({ error: "동화 형식 파싱에 실패했습니다." });
+      return res.status(500).json({ error: '동화 형식 파싱에 실패했습니다.' });
     }
 
-    const story_name = titleMatch[1];
-    const story_content = contentMatch[1];
-
     res.json({
-      story_name,
-      story_content,
+      story_name: titleMatch[1],
+      story_content: contentMatch[1],
       original_filename: file.originalname,
     });
-
   } catch (error) {
-    console.error("이미지 업로드 에러:", error);
+    console.error('이미지 업로드 에러:', error);
     res.status(500).json({ error: error.message });
   }
 };
 
 // 사용자가 확인 후 저장 확정 시 처리
-exports.saveStory = async (req, res) => {
+export const saveStory = async (req, res) => {
   let filename = null;
 
   try {
     const file = req.file;
     const { user_id, story_name, story_content, voice_gender = 'FEMALE' } = req.body;
-    // voice_gender: 'MALE' | 'FEMALE' (미전송 시 기본값 FEMALE)
 
-    if (!file) {
-      return res.status(400).json({ error: "파일 업로드 실패" });
-    }
-
+    if (!file) return res.status(400).json({ error: '파일 업로드 실패' });
     if (!user_id || !story_name || !story_content) {
-      return res.status(400).json({ error: "필수 정보가 누락되었습니다." });
+      return res.status(400).json({ error: '필수 정보가 누락되었습니다.' });
     }
 
     // 1. 이미지 파일 저장
@@ -91,7 +82,6 @@ exports.saveStory = async (req, res) => {
     filename = uniqueSuffix + path.extname(file.originalname);
     const filePath = path.join(config.UPLOAD_DIRECTORY, filename);
 
-    // 폴더 없으면 자동 생성 (Railway 재배포 시 폴더가 사라지므로)
     if (!fs.existsSync(config.UPLOAD_DIRECTORY)) {
       fs.mkdirSync(config.UPLOAD_DIRECTORY, { recursive: true });
     }
@@ -108,10 +98,8 @@ exports.saveStory = async (req, res) => {
       user_id: parseInt(user_id),
       original_filename: filename,
       image_url,
-      image_description: ""
+      image_description: '',
     });
-
-    const image_id = image.image_id;
 
     // 3. TTS 음성 생성 및 저장
     //    실패해도 동화 저장은 계속 진행 (audio_url은 null로 저장)
@@ -120,7 +108,7 @@ exports.saveStory = async (req, res) => {
       audio_url = await synthesizeSpeech(story_content, filename, voice_gender);
       console.log(`TTS 생성 완료: ${audio_url}`);
     } catch (ttsError) {
-      console.error("TTS 생성 실패 (동화 저장은 계속 진행):", ttsError.message);
+      console.error('TTS 생성 실패 (동화 저장은 계속 진행):', ttsError.message);
     }
 
     // 4. 이야기 DB 저장
@@ -128,12 +116,10 @@ exports.saveStory = async (req, res) => {
       filename,
       story_name,
       story_content,
-      image_id,
+      image_id: image.image_id,
       user_id: parseInt(user_id),
       audio_url,
     });
-
-    console.log(`filename: ${filename}\nstory_name: ${story_name}`);
 
     res.json({
       filename,
@@ -143,30 +129,21 @@ exports.saveStory = async (req, res) => {
       audio_url,
       created_at: story.created_at,
     });
-
   } catch (error) {
-    console.error("이야기 저장 에러:", error);
+    console.error('이야기 저장 에러:', error);
     res.status(500).json({ error: error.message });
   }
 };
 
 // 이야기 목록 조회 (user_id 기준)
-exports.getStoryList = async (req, res) => {
+export const getStoryList = async (req, res) => {
   try {
     const { user_id } = req.params;
-
-    if (!user_id) {
-      return res.status(400).json({ error: "user_id는 필수입니다." });
-    }
+    if (!user_id) return res.status(400).json({ error: 'user_id는 필수입니다.' });
 
     const stories = await Story.findAll({
       where: { user_id: parseInt(user_id) },
-      include: [
-        {
-          association: 'image',
-          attributes: ['image_url'],
-        }
-      ],
+      include: [{ association: 'image', attributes: ['image_url'] }],
       attributes: ['story_id', 'story_name', 'created_at'],
       order: [['story_id', 'DESC']],
     });
@@ -179,64 +156,47 @@ exports.getStoryList = async (req, res) => {
     }));
 
     res.json(result);
-
   } catch (error) {
-    console.error("이야기 목록 조회 에러:", error);
+    console.error('이야기 목록 조회 에러:', error);
     res.status(500).json({ error: error.message });
   }
 };
 
 // 이야기 상세 조회 (story_id 기준) - audio_url 포함
-exports.getStoryDetail = async (req, res) => {
+export const getStoryDetail = async (req, res) => {
   try {
     const { story_id } = req.params;
-
-    if (!story_id) {
-      return res.status(400).json({ error: "story_id는 필수입니다." });
-    }
+    if (!story_id) return res.status(400).json({ error: 'story_id는 필수입니다.' });
 
     const story = await Story.findOne({
       where: { story_id: parseInt(story_id) },
-      include: [
-        {
-          association: 'image',
-          attributes: ['image_url'],
-        }
-      ],
+      include: [{ association: 'image', attributes: ['image_url'] }],
       attributes: ['story_id', 'story_name', 'story_content', 'audio_url', 'created_at'],
     });
 
-    if (!story) {
-      return res.status(404).json({ error: "이야기를 찾을 수 없습니다." });
-    }
+    if (!story) return res.status(404).json({ error: '이야기를 찾을 수 없습니다.' });
 
     res.json({
       story_id: story.story_id,
       story_name: story.story_name,
       story_content: story.story_content,
       image_url: story.image?.image_url ?? null,
-      audio_url: story.audio_url ?? null,  // TTS 실패 시 null
+      audio_url: story.audio_url ?? null,
       created_at: story.created_at,
     });
-
   } catch (error) {
-    console.error("이야기 상세 조회 에러:", error);
+    console.error('이야기 상세 조회 에러:', error);
     res.status(500).json({ error: error.message });
   }
 };
 
 // TTS 미리듣기 (저장 없이 스트리밍)
-exports.ttsPreview = async (req, res) => {
+export const ttsPreview = async (req, res) => {
   try {
     const { story_content, voice_gender = 'FEMALE' } = req.body;
+    if (!story_content) return res.status(400).json({ error: 'story_content는 필수입니다.' });
 
-    if (!story_content) {
-      return res.status(400).json({ error: "story_content는 필수입니다." });
-    }
-
-    // 미리듣기는 앞부분 150자만 변환 (API 비용 절감)
     const previewText = story_content.slice(0, 150);
-
     const audioBuffer = await synthesizeSpeechPreview(previewText, voice_gender);
 
     res.set({
@@ -246,22 +206,19 @@ exports.ttsPreview = async (req, res) => {
     });
 
     res.send(audioBuffer);
-
   } catch (error) {
-    console.error("TTS 미리듣기 에러:", error);
-    res.status(500).json({ error: "TTS 미리듣기에 실패했습니다." });
+    console.error('TTS 미리듣기 에러:', error);
+    res.status(500).json({ error: 'TTS 미리듣기에 실패했습니다.' });
   }
 };
 
 // 이야기 + 이미지 + 음성 삭제
-exports.deleteStory = async (req, res) => {
+export const deleteStory = async (req, res) => {
   try {
     const { story_id } = req.params;
     const user_id = req.user.user_id;
 
-    if (!story_id) {
-      return res.status(400).json({ error: "story_id는 필수입니다." });
-    }
+    if (!story_id) return res.status(400).json({ error: 'story_id는 필수입니다.' });
 
     // 본인 소유 확인
     const story = await Story.findOne({
@@ -269,9 +226,7 @@ exports.deleteStory = async (req, res) => {
       include: [{ association: 'image' }],
     });
 
-    if (!story) {
-      return res.status(404).json({ error: "이야기를 찾을 수 없습니다." });
-    }
+    if (!story) return res.status(404).json({ error: '이야기를 찾을 수 없습니다.' });
 
     const filename = story.filename;
     const image_id = story.image_id;
@@ -292,11 +247,9 @@ exports.deleteStory = async (req, res) => {
     deleteAudioFile(filename);
 
     console.log(`삭제 완료 - story_id: ${story_id}, filename: ${filename}`);
-
-    res.json({ message: "이야기가 삭제되었습니다." });
-
+    res.json({ message: '이야기가 삭제되었습니다.' });
   } catch (error) {
-    console.error("이야기 삭제 에러:", error);
+    console.error('이야기 삭제 에러:', error);
     res.status(500).json({ error: error.message });
   }
 };

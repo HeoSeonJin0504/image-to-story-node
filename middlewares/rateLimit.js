@@ -1,4 +1,4 @@
-const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
+import { rateLimit, ipKeyGenerator } from 'express-rate-limit';
 
 const rateLimitHandler = (req, res) => {
   res.status(429).json({ error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' });
@@ -10,10 +10,8 @@ const userAndIpKey = (req) => {
   return req.user?.user_id ? `${req.user.user_id}:${ip}` : ip;
 };
 
-// 전역 IP 제한: 인증 여부와 무관하게 IP당 상한선
-
 // 동화 생성 전역 제한: IP 기준 1시간 5회 (user+IP 제한의 상한선)
-const globalStoryLimiter = rateLimit({
+export const globalStoryLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 5,
   keyGenerator: (req) => ipKeyGenerator(req),
@@ -23,7 +21,7 @@ const globalStoryLimiter = rateLimit({
 });
 
 // TTS 전역 제한: IP 기준 1시간 5회
-const globalTtsLimiter = rateLimit({
+export const globalTtsLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 5,
   keyGenerator: (req) => ipKeyGenerator(req),
@@ -32,10 +30,8 @@ const globalTtsLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// 유저+IP 조합 제한 (계정 다중 생성 방어)
-
 // 동화 생성 제한: user+IP 기준 1시간 3회
-const storyGenerateLimiter = rateLimit({
+export const storyGenerateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 3,
   keyGenerator: userAndIpKey,
@@ -45,7 +41,7 @@ const storyGenerateLimiter = rateLimit({
 });
 
 // TTS 미리듣기 제한: user+IP 기준 1시간 3회
-const ttsPreviewLimiter = rateLimit({
+export const ttsPreviewLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 3,
   keyGenerator: userAndIpKey,
@@ -55,7 +51,7 @@ const ttsPreviewLimiter = rateLimit({
 });
 
 // 동화 저장 제한: user+IP 기준 1시간 5회
-const storySaveLimiter = rateLimit({
+export const storySaveLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 5,
   keyGenerator: userAndIpKey,
@@ -65,7 +61,7 @@ const storySaveLimiter = rateLimit({
 });
 
 // 로그인 제한: IP 기준 1시간 5회
-const loginLimiter = rateLimit({
+export const loginLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 5,
   keyGenerator: (req) => ipKeyGenerator(req),
@@ -76,10 +72,10 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// 회원가입 제한: IP 기준 1시간 2회
-const signupLimiter = rateLimit({
+// 회원가입 제한: IP 기준 1시간 3회
+export const signupLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 2,
+  max: 3,
   keyGenerator: (req) => ipKeyGenerator(req),
   handler: (req, res) => {
     res.status(429).json({ error: '회원가입 시도가 너무 많습니다. 1시간 후 다시 시도해주세요.' });
@@ -87,13 +83,3 @@ const signupLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-
-module.exports = {
-  globalStoryLimiter,
-  globalTtsLimiter,
-  storyGenerateLimiter,
-  ttsPreviewLimiter,
-  storySaveLimiter,
-  loginLimiter,
-  signupLimiter,
-};

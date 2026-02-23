@@ -1,5 +1,5 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/database.js';
 
 const Story = sequelize.define('Story', {
   story_id: {
@@ -28,10 +28,9 @@ const Story = sequelize.define('Story', {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
-  // TTS로 생성된 음성 파일 URL
-  audio_url: {
+  audio_url: {   // TTS로 생성된 음성 파일 URL
     type: DataTypes.STRING(255),
-    allowNull: true,  // TTS 실패해도 동화 저장은 성공하도록 nullable
+    allowNull: true, // TTS 실패해도 동화 저장은 성공하도록 nullable
   },
   created_at: {
     type: DataTypes.DATE,
@@ -43,4 +42,4 @@ const Story = sequelize.define('Story', {
   timestamps: false,
 });
 
-module.exports = Story;
+export default Story;

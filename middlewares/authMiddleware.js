@@ -1,4 +1,4 @@
-const { verifyAccessToken } = require('../services/tokenService');
+import { verifyAccessToken } from '../services/tokenService.js';
 
 const authMiddleware = (req, res, next) => {
   try {
@@ -11,7 +11,7 @@ const authMiddleware = (req, res, next) => {
     const token = authHeader.split(' ')[1];
     const decoded = verifyAccessToken(token);
 
-    req.user = decoded; // { user_id, name }
+    req.user = decoded;
     next();
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
@@ -21,4 +21,4 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-module.exports = authMiddleware;
+export default authMiddleware;

@@ -1,12 +1,8 @@
-// services/tokenService.js
-const jwt = require('jsonwebtoken');
-const config = require('../config/env');
-const { RefreshToken } = require('../models');
+import jwt from 'jsonwebtoken';
+import config from '../config/env.js';
+import { RefreshToken } from '../models/index.js';
 
-/**
- * Access Token 발급 (payload: { user_id, name })
- */
-const generateAccessToken = (user) => {
+export const generateAccessToken = (user) => {
   return jwt.sign(
     { user_id: user.user_id, name: user.name },
     config.JWT_ACCESS_SECRET,
@@ -14,38 +10,27 @@ const generateAccessToken = (user) => {
   );
 };
 
-/**
- * Refresh Token 발급 후 DB 저장
- */
-const generateRefreshToken = async (user) => {
+export const generateRefreshToken = async (user) => {
   const token = jwt.sign(
     { user_id: user.user_id },
     config.JWT_REFRESH_SECRET,
     { expiresIn: config.JWT_REFRESH_EXPIRES_IN }
   );
 
-  // 만료 시간 계산 (7일)
   const decoded = jwt.decode(token);
   const expires_at = new Date(decoded.exp * 1000);
 
-  // 기존 토큰 삭제 후 새 토큰 저장 (1인 1토큰 정책)
   await RefreshToken.destroy({ where: { user_id: user.user_id } });
   await RefreshToken.create({ user_id: user.user_id, token, expires_at });
 
   return token;
 };
 
-/**
- * Access Token 검증
- */
-const verifyAccessToken = (token) => {
+export const verifyAccessToken = (token) => {
   return jwt.verify(token, config.JWT_ACCESS_SECRET);
 };
 
-/**
- * Refresh Token 검증 (JWT 서명 + DB 존재 여부)
- */
-const verifyRefreshToken = async (token) => {
+export const verifyRefreshToken = async (token) => {
   const decoded = jwt.verify(token, config.JWT_REFRESH_SECRET);
 
   const storedToken = await RefreshToken.findOne({
@@ -59,17 +44,7 @@ const verifyRefreshToken = async (token) => {
   return decoded;
 };
 
-/**
- * Refresh Token DB에서 삭제 (로그아웃)
- */
-const revokeRefreshToken = async (token) => {
+//  Refresh Token DB에서 삭제 (로그아웃)
+export const revokeRefreshToken = async (token) => {
   await RefreshToken.destroy({ where: { token } });
-};
-
-module.exports = {
-  generateAccessToken,
-  generateRefreshToken,
-  verifyAccessToken,
-  verifyRefreshToken,
-  revokeRefreshToken,
 };

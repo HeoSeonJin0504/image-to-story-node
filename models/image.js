@@ -1,5 +1,5 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/database.js';
 
 const Image = sequelize.define('Image', {
   image_id: {
@@ -26,4 +26,4 @@ const Image = sequelize.define('Image', {
   timestamps: false,
 });
 
-module.exports = Image;
+export default Image;

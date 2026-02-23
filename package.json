@@ -1,38 +1,36 @@
 {
-  "name": "image-to-story",
-  "version": "1.0.0",
-  "description": "그림을 업로드하면 동화를 생성하는 프로그램",
-  "main": "app.js",
-  "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js"
-  },
-  "dependencies": {
-    "@google-cloud/text-to-speech": "^6.4.0",
-    "bcrypt": "^6.0.0",
-    "cookie-parser": "^1.4.7",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.22.1",
-    "express-rate-limit": "^8.2.1",
-    "jsonwebtoken": "^9.0.2",
-    "multer": "^1.4.5-lts.1",
-    "mysql2": "^3.11.5",
-    "openai": "^4.85.0",
-    "pg": "^8.13.3",
-    "pg-hstore": "^2.3.4",
-    "sequelize": "^6.37.5"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.9"
-  },
-  "overrides": {
-    "lodash": "^4.17.21",
-    "tar": "^7.5.6",
-    "qs": "^6.15.0",
-    "body-parser": "^1.20.4",
-    "minimatch": "^10.2.1",
-    "glob": "^11.0.0",
-    "rimraf": "^6.0.0"
-  }
+    "name": "image-to-story",
+    "version": "1.0.0",
+    "description": "그림을 업로드하면 동화를 생성하는 프로그램",
+    "main": "app.js",
+    "type": "module",
+    "scripts": {
+        "start": "node app.js",
+        "dev": "nodemon app.js"
+    },
+    "dependencies": {
+        "@google-cloud/text-to-speech": "^6.4.0",
+        "bcrypt": "^6.0.0",
+        "cookie-parser": "^1.4.7",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.7",
+        "express": "^4.22.1",
+        "express-rate-limit": "^8.2.1",
+        "jsonwebtoken": "^9.0.2",
+        "multer": "^1.4.5-lts.1",
+        "mysql2": "^3.11.5",
+        "openai": "^4.85.0",
+        "pg": "^8.13.3",
+        "pg-hstore": "^2.3.4",
+        "sequelize": "^6.37.5"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.9"
+    },
+    "overrides": {
+        "lodash": "^4.17.21",
+        "tar": "^7.5.6",
+        "qs": "^6.15.0",
+        "body-parser": "^1.20.4"
+    }
 }

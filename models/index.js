@@ -1,9 +1,8 @@
-// models/index.js
-const sequelize = require('../config/database');
-const User = require('./user');
-const Image = require('./image');
-const Story = require('./story');
-const RefreshToken = require('./refreshToken');
+import sequelize from '../config/database.js';
+import User from './user.js';
+import Image from './image.js';
+import Story from './story.js';
+import RefreshToken from './refreshToken.js';
 
 User.hasMany(Image, { foreignKey: 'user_id', as: 'images' });
 Image.belongsTo(User, { foreignKey: 'user_id', as: 'owner' });
@@ -28,4 +27,4 @@ const initDB = async () => {
   }
 };
 
-module.exports = { sequelize, User, Image, Story, RefreshToken, initDB };
+export { sequelize, User, Image, Story, RefreshToken, initDB };

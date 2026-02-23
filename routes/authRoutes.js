@@ -1,12 +1,13 @@
-const express = require("express");
-const router = express.Router();
-const authController = require("../controllers/authController");
-const { loginLimiter, signupLimiter } = require("../middlewares/rateLimit");
+import { Router } from 'express';
+import * as authController from '../controllers/authController.js';
+import { loginLimiter, signupLimiter } from '../middlewares/rateLimit.js';
 
-router.post("/check-duplicate", authController.checkDuplicate);
-router.post("/login", loginLimiter, authController.login);
-router.post("/signup", signupLimiter, authController.signup);
-router.post("/refresh", authController.refresh);
-router.post("/logout", authController.logout);
+const router = Router();
 
-module.exports = router;
+router.post('/check-duplicate', authController.checkDuplicate);
+router.post('/login', loginLimiter, authController.login);
+router.post('/signup', signupLimiter, authController.signup);
+router.post('/refresh', authController.refresh);
+router.post('/logout', authController.logout);
+
+export default router;
