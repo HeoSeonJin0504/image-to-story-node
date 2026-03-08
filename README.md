@@ -181,7 +181,7 @@ DB 연결 성공
 
 | 항목 | 정책 |
 |------|------|
-| 비밀번호 | bcrypt (Salt Rounds: 10) 해싱 |
+| 비밀번호 | bcryptjs (Salt Rounds: 10) 해싱 |
 | 인증 | Access Token 15분 + Refresh Token 7일 (httpOnly 쿠키) |
 | 토큰 정책 | 1인 1 Refresh Token (로그인 시 기존 토큰 교체) |
 | 파일 업로드 | 최대 10MB, jpeg/jpg/png/gif만 허용 |
