@@ -1,16 +1,37 @@
+import logger from '../utils/logger.js';
+
 const errorHandler = (err, req, res, next) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.error('Error:', err);
+  const statusCode = err.statusCode || err.status || 500;
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (statusCode >= 500) {
+    logger.error(`[${statusCode}] ${req.method} ${req.path} - ${err.message}`);
   } else {
-    console.error(`[${new Date().toISOString()}] ${err.name}: ${err.message}`);
+    logger.warn(`[${statusCode}] ${req.method} ${req.path} - ${err.message}`);
   }
 
-  const statusCode = err.statusCode || 500;
-  const message = statusCode === 500
-    ? '서버 내부 오류가 발생했습니다.'
-    : err.message || '요청을 처리할 수 없습니다.';
+  // JWT 오류
+  if (err.name === 'JsonWebTokenError') {
+    return res.status(401).json({ error: '유효하지 않은 토큰입니다.' });
+  }
+  if (err.name === 'TokenExpiredError') {
+    return res.status(401).json({ error: '토큰이 만료되었습니다.' });
+  }
 
-  res.status(statusCode).json({ error: message });
+  // Multer 오류 (파일 업로드)
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({ error: '파일 크기가 너무 큽니다.' });
+  }
+
+  // 유효성 오류
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({ error: err.message });
+  }
+
+  // 일반 오류
+  res.status(statusCode).json({
+    error: isProduction ? '서버 내부 오류가 발생했습니다.' : err.message,
+  });
 };
 
 export default errorHandler;

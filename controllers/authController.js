@@ -1,5 +1,5 @@
 import { User } from '../models/index.js';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -16,6 +16,14 @@ const REFRESH_COOKIE_OPTIONS = {
   secure: isProduction,
   sameSite: isProduction ? 'none' : 'lax',
   maxAge: 7 * 24 * 60 * 60 * 1000,
+  path: '/',
+};
+
+// 쿠키 삭제 시 발급 옵션과 동일하게 맞춰야 브라우저가 정확히 삭제함
+const REFRESH_COOKIE_CLEAR_OPTIONS = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? 'none' : 'lax',
   path: '/',
 };
 
@@ -54,7 +62,7 @@ export const login = async (req, res) => {
 
     // Refresh Token은 httpOnly 쿠키로 전송
     res.cookie('refreshToken', refreshToken, REFRESH_COOKIE_OPTIONS);
-    res.json({ user_id: user.user_id, name: user.name, accessToken });
+    res.json({ accessToken, user_id: user.user_id, name: user.name });
   } catch (error) {
     console.error('로그인 에러:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
@@ -99,7 +107,7 @@ export const refresh = async (req, res) => {
     res.json({ accessToken, user_id: user.user_id, name: user.name });
   } catch (error) {
     console.error('토큰 재발급 에러:', error);
-    res.clearCookie('refreshToken', { path: '/' });
+    res.clearCookie('refreshToken', REFRESH_COOKIE_CLEAR_OPTIONS);
     res.status(401).json({ error: '세션이 만료되었습니다. 다시 로그인해주세요.' });
   }
 };
@@ -114,7 +122,7 @@ export const logout = async (req, res) => {
     if (token) {
       await revokeRefreshToken(token);
     }
-    res.clearCookie('refreshToken', { path: '/' });
+    res.clearCookie('refreshToken', REFRESH_COOKIE_CLEAR_OPTIONS);
     res.json({ message: '로그아웃 되었습니다.' });
   } catch (error) {
     console.error('로그아웃 에러:', error);
