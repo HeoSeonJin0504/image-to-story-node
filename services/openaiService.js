@@ -1,5 +1,6 @@
 import { OpenAI } from 'openai';
 import config from '../config/env.js';
+import logger from '../utils/logger.js';
 
 const openai = new OpenAI({
   apiKey: config.OPENAI_API_KEY,
@@ -33,9 +34,12 @@ export const detectStoryWithChatGPT = async (base64Image, mimeType = 'image/jpeg
       ],
       max_tokens: 600,
     });
-    return response.choices[0].message.content.trim();
+
+    const result = response.choices[0].message.content.trim();
+    logger.info(`OpenAI 응답: ${result}`);
+    return result;
   } catch (err) {
-    console.error('OpenAI 호출 에러:', err);
+    logger.error(`OpenAI 호출 에러: ${err.message}`);
     throw new Error('OpenAI API 호출에 실패했습니다.');
   }
 };

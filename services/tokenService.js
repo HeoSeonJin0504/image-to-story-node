@@ -4,7 +4,7 @@ import { RefreshToken } from '../models/index.js';
 
 export const generateAccessToken = (user) => {
   return jwt.sign(
-    { user_id: user.user_id, name: user.name },
+    { user_id: user.user_id, username: user.username },
     config.JWT_ACCESS_SECRET,
     { expiresIn: config.JWT_ACCESS_EXPIRES_IN }
   );
@@ -12,7 +12,7 @@ export const generateAccessToken = (user) => {
 
 export const generateRefreshToken = async (user) => {
   const token = jwt.sign(
-    { user_id: user.user_id },
+    { user_id: user.user_id, username: user.username },
     config.JWT_REFRESH_SECRET,
     { expiresIn: config.JWT_REFRESH_EXPIRES_IN }
   );
