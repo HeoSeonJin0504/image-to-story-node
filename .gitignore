@@ -1,5 +1,6 @@
 .env
 node_modules/
 images/*
+!images/demo.png
 audios/*
 google-credentials.json

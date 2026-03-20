@@ -83,3 +83,25 @@ export const signupLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+// 데모 동화 생성 제한: IP 기준 1시간 3회
+export const demoLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  keyGenerator: (req) => ipKeyGenerator(req),
+  handler: (req, res) => {
+    res.status(429).json({ error: '데모 사용 횟수를 초과했습니다. 1시간 후 다시 시도해주세요.' });
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// 데모 TTS 제한: IP 기준 1시간 5회
+export const demoTtsLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  keyGenerator: (req) => ipKeyGenerator(req),
+  handler: rateLimitHandler,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
